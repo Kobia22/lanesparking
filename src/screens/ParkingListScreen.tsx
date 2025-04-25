@@ -4,12 +4,7 @@ import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import { fetchParkingSpaces } from '../firebase/database';
 import { StackNavigationProp } from '@react-navigation/stack';
 
-type ParkingSpace = {
-  id: string;
-  location: string;
-  isOccupied: boolean;
-  // Add other properties as needed
-};
+import type { ParkingSpace } from '@/src/types';
 
 type RootStackParamList = {
   ParkingList: undefined;

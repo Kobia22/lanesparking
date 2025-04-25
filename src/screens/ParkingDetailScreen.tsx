@@ -1,9 +1,23 @@
-// screens/ParkingDetailScreen.tsx
 import React from 'react';
 import { View, Text, Button } from 'react-native';
 import { bookParkingSpace } from '../firebase/database';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RouteProp } from '@react-navigation/native';
+import type { ParkingSpace } from '@/src/types';
 
-export default function ParkingDetailScreen({ route, navigation }: { route: any, navigation: any }) {
+export type RootStackParamList = {
+  Login: undefined;
+  ParkingList: undefined;
+  ParkingDetail: { parkingSpace: ParkingSpace };
+  BookingConfirmation: { parkingSpace: ParkingSpace };
+};
+
+type ParkingDetailScreenProps = {
+  route: RouteProp<RootStackParamList, 'ParkingDetail'>;
+  navigation: StackNavigationProp<RootStackParamList, 'ParkingDetail'>;
+};
+
+export default function ParkingDetailScreen({ route, navigation }: ParkingDetailScreenProps) {
   const { parkingSpace } = route.params;
 
   const handleBookSpace = async () => {

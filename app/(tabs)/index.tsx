@@ -4,14 +4,15 @@ import { createStackNavigator, StackNavigationOptions } from '@react-navigation/
 import LoginScreen from '@/src/screens/LoginScreen';
 import ParkingListScreen from '@/src/screens/ParkingListScreen';
 import ParkingDetailScreen from '@/src/screens/ParkingDetailScreen';
-// import BookingConfirmationScreen from '@/src/screens/BookingConfirmationScreen'; // Uncomment if you have this screen
+import BookingConfirmationScreen from '@/src/screens/BookingConfirmationScreen';
 
-// Define the type for your stack's params for better type safety
+import type { ParkingSpace } from '@/src/types';
+
 export type RootStackParamList = {
   Login: undefined;
   ParkingList: undefined;
-  ParkingDetail: { id: string } | undefined;
-  // BookingConfirmation?: undefined;
+  ParkingDetail: { parkingSpace: ParkingSpace };
+  BookingConfirmation: { parkingSpace: ParkingSpace };
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -41,7 +42,7 @@ export default function App() {
         <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Sign In' }} />
         <Stack.Screen name="ParkingList" component={ParkingListScreen} options={{ title: 'Available Parking' }} />
         <Stack.Screen name="ParkingDetail" component={ParkingDetailScreen} options={{ title: 'Parking Details' }} />
-        {/* <Stack.Screen name="BookingConfirmation" component={BookingConfirmationScreen} options={{ title: 'Booking Confirmed' }} /> */}
+        <Stack.Screen name="BookingConfirmation" component={BookingConfirmationScreen} options={{ title: 'Booking Confirmed' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
