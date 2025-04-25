@@ -1,74 +1,50 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator, StackNavigationOptions } from '@react-navigation/stack';
+import LoginScreen from '@/src/screens/LoginScreen';
+import ParkingListScreen from '@/src/screens/ParkingListScreen';
+import ParkingDetailScreen from '@/src/screens/ParkingDetailScreen';
+// import BookingConfirmationScreen from '@/src/screens/BookingConfirmationScreen'; // Uncomment if you have this screen
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+// Define the type for your stack's params for better type safety
+export type RootStackParamList = {
+  Login: undefined;
+  ParkingList: undefined;
+  ParkingDetail: { id: string } | undefined;
+  // BookingConfirmation?: undefined;
+};
 
-export default function HomeScreen() {
+const Stack = createStackNavigator<RootStackParamList>();
+
+// Optional: Default screen options for a consistent look
+const screenOptions: StackNavigationOptions = {
+  headerStyle: {
+    backgroundColor: '#A1CEDC',
+    shadowColor: 'transparent',
+  },
+  headerTitleAlign: 'center',
+  headerTintColor: '#222',
+  headerTitleStyle: {
+    fontWeight: 'bold',
+    fontSize: 20,
+  },
+};
+
+export default function App() {
+  // Optionally, you could add a loading state if you use async providers (e.g., auth, fonts)
+  // const [isReady, setIsReady] = React.useState(true);
+  // if (!isReady) return <ActivityIndicator size="large" style={{ flex: 1 }} />;
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Hello World!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Login" screenOptions={screenOptions}>
+        <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Sign In' }} />
+        <Stack.Screen name="ParkingList" component={ParkingListScreen} options={{ title: 'Available Parking' }} />
+        <Stack.Screen name="ParkingDetail" component={ParkingDetailScreen} options={{ title: 'Parking Details' }} />
+        {/* <Stack.Screen name="BookingConfirmation" component={BookingConfirmationScreen} options={{ title: 'Booking Confirmed' }} /> */}
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
+// All unused styles and StyleSheet import have been removed for clarity.
