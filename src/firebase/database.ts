@@ -5,10 +5,14 @@ import { collection, getDocs, addDoc, updateDoc, doc } from 'firebase/firestore'
 export const fetchParkingSpaces = async () => {
   const parkingSpacesCollection = collection(db, 'parkingSpaces');
   const snapshot = await getDocs(parkingSpacesCollection);
-  const spaces = snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+  const spaces = snapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      location: data.location ?? "Unknown Location",
+      isOccupied: data.isOccupied ?? false,
+    };
+  });
   return spaces;
 };
 

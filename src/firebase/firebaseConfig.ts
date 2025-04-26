@@ -1,9 +1,10 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-
+import { getAnalytics, isSupported as analyticsIsSupported } from "firebase/analytics";
+import { initializeAuth } from 'firebase/auth';
+import { getReactNativePersistence } from 'firebase/auth/react-native';
+import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -21,8 +22,30 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-const auth = getAuth();
 const db = getFirestore(app);
 
-export { app, analytics, auth, db };
+// Initialize Firebase Auth with React Native persistence
+const auth = initializeAuth(app, {
+  persistence: getReactNativePersistence(ReactNativeAsyncStorage)
+});
+
+// Debug: Log auth state to verify persistence
+import { onAuthStateChanged } from 'firebase/auth';
+onAuthStateChanged(auth, user => {
+  if (user) {
+    console.log('Firebase Auth: User is logged in:', user.uid);
+  } else {
+    console.log('Firebase Auth: No user is logged in.');
+  }
+});
+
+// Analytics: Only initialize if supported (web only, not in Expo Go or React Native)
+let analytics: ReturnType<typeof getAnalytics> | undefined;
+analyticsIsSupported().then((supported) => {
+  if (supported) {
+    analytics = getAnalytics(app);
+  }
+});
+
+// Export initialized Firebase instances
+export { app, analytics, auth, db};

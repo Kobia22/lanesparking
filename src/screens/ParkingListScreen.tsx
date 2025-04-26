@@ -1,37 +1,22 @@
-// screens/ParkingListScreen.tsx
+interface ParkingSpace {
+  id: string;
+  location: string;
+  isOccupied: boolean;
+  // add any other properties your parking spaces have
+}
+
+// screens/ParkingListScreen.js
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity } from 'react-native';
-import { fetchParkingSpaces } from '../firebase/database';
-import { StackNavigationProp } from '@react-navigation/stack';
+import { fetchParkingSpaces } from '@/src/firebase/database';
 
-import type { ParkingSpace } from '@/src/types';
-
-type RootStackParamList = {
-  ParkingList: undefined;
-  ParkingDetail: { parkingSpace: ParkingSpace };
-};
-
-type ParkingListScreenProps = {
-  navigation: StackNavigationProp<RootStackParamList, 'ParkingList'>;
-};
-
-export default function ParkingListScreen({ navigation }: ParkingListScreenProps) {
+export default function ParkingListScreen() {
   const [parkingSpaces, setParkingSpaces] = useState<ParkingSpace[]>([]);
 
   useEffect(() => {
     const loadParkingSpaces = async () => {
-      try {
-        const spaces = await fetchParkingSpaces();
-        // Ensure the returned data matches the ParkingSpace type
-        const typedSpaces: ParkingSpace[] = spaces.map((space: any) => ({
-          id: space.id,
-          location: space.location || 'Unknown location',
-          isOccupied: space.isOccupied || false,
-        }));
-        setParkingSpaces(typedSpaces);
-      } catch (error) {
-        console.error('Error loading parking spaces:', error);
-      }
+      const spaces = await fetchParkingSpaces();
+      setParkingSpaces(spaces);
     };
     loadParkingSpaces();
   }, []);
@@ -45,7 +30,7 @@ export default function ParkingListScreen({ navigation }: ParkingListScreenProps
         renderItem={({ item }) => (
           <TouchableOpacity
             style={{ padding: 16, margin: 8, backgroundColor: item.isOccupied ? '#ffdddd' : '#ddffdd' }}
-            onPress={() => navigation.navigate('ParkingDetail', { parkingSpace: item })}
+            onPress={() => console.log('Navigate to Parking Detail')}
           >
             <Text style={{ fontSize: 18 }}>{item.location}</Text>
             <Text>Status: {item.isOccupied ? 'Occupied' : 'Available'}</Text>

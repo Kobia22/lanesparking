@@ -17,7 +17,6 @@ export type RootStackParamList = {
 
 const Stack = createStackNavigator<RootStackParamList>();
 
-// Optional: Default screen options for a consistent look
 const screenOptions: StackNavigationOptions = {
   headerStyle: {
     backgroundColor: '#A1CEDC',
@@ -31,21 +30,27 @@ const screenOptions: StackNavigationOptions = {
   },
 };
 
-export default function App() {
-  // Optionally, you could add a loading state if you use async providers (e.g., auth, fonts)
-  // const [isReady, setIsReady] = React.useState(true);
-  // if (!isReady) return <ActivityIndicator size="large" style={{ flex: 1 }} />;
-
+export default function AppNavigator() {
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Login" screenOptions={screenOptions}>
-        <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Sign In' }} />
-        <Stack.Screen name="ParkingList" component={ParkingListScreen} options={{ title: 'Available Parking' }} />
-        <Stack.Screen name="ParkingDetail" component={ParkingDetailScreen} options={{ title: 'Parking Details' }} />
-        <Stack.Screen name="BookingConfirmation" component={BookingConfirmationScreen} options={{ title: 'Booking Confirmed' }} />
+        <Stack.Screen
+  name="Login"
+  children={(props) => (
+    <LoginScreen
+      {...props}
+      onLoginSuccess={() => {
+        // Example: Navigate to ParkingList on successful login
+        // You can customize this logic as needed
+        props.navigation.replace('ParkingList');
+      }}
+    />
+  )}
+/>
+        <Stack.Screen name="ParkingList" component={ParkingListScreen} />
+        <Stack.Screen name="ParkingDetail" component={ParkingDetailScreen} />
+        <Stack.Screen name="BookingConfirmation" component={BookingConfirmationScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
 }
-
-// All unused styles and StyleSheet import have been removed for clarity.
