@@ -2,9 +2,7 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAnalytics, isSupported as analyticsIsSupported } from "firebase/analytics";
-import { initializeAuth } from 'firebase/auth';
-import { getReactNativePersistence } from 'firebase/auth/react-native';
-import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuth } from 'firebase/auth';
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -24,10 +22,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Initialize Firebase Auth with React Native persistence
-const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(ReactNativeAsyncStorage)
-});
+// Initialize Firebase Auth (default web persistence for Expo Go)
+const auth = getAuth(app);
 
 // Debug: Log auth state to verify persistence
 import { onAuthStateChanged } from 'firebase/auth';
