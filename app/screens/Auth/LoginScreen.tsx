@@ -1,8 +1,10 @@
 // LoginScreen - Handles login/register for students and guests
 import React, { useState } from 'react';
-import { View, TextInput, Text, StyleSheet, Alert, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { app } from '@/src/firebase/firebaseConfig';
+import ThemedForm from '@/app/components/ThemedForm';
+import { colors } from '@/app/constants/theme';
 
 interface LoginScreenProps {
   onLoginSuccess?: () => void;
@@ -53,33 +55,21 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
       <Text style={[styles.roleInfo, getRole(email) === 'student' ? styles.studentRole : styles.guestRole]}>
         {getRole(email) === 'student' ? 'Student Login' : 'Guest Login'}
       </Text>
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          placeholderTextColor="#b0b0b0"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          placeholderTextColor="#b0b0b0"
-        />
-      </View>
       <TouchableOpacity style={styles.switchButton} onPress={() => setIsRegister((v) => !v)}>
         <Text style={styles.switchText}>
           {isRegister ? 'Already have an account? Login' : "Don't have an account? Register"}
         </Text>
       </TouchableOpacity>
-      <TouchableOpacity style={[styles.button, loading && styles.buttonDisabled]} onPress={handleAuth} disabled={loading}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>{isRegister ? 'Register' : 'Login'}</Text>}
-      </TouchableOpacity>
+      <ThemedForm
+        title={isRegister ? 'Register' : 'Login'}
+        email={email}
+        password={password}
+        onEmailChange={setEmail}
+        onPasswordChange={setPassword}
+        onSubmit={handleAuth}
+        loading={loading}
+        submitLabel={isRegister ? 'Register' : 'Login'}
+      />
     </View>
   );
 }
@@ -90,12 +80,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
-    backgroundColor: '#f5faff',
+    backgroundColor: '#fff', // white
   },
   brand: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#2563eb',
+    color: '#06b6d4',
     marginBottom: 12,
     letterSpacing: 1.5,
   },
@@ -103,7 +93,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '600',
     marginBottom: 8,
-    color: '#222',
+    color: colors.text,
   },
   roleInfo: {
     fontSize: 16,
@@ -118,65 +108,23 @@ const styles = StyleSheet.create({
   studentRole: {
     backgroundColor: '#e0f2fe',
     color: '#0369a1',
-    borderColor: '#38bdf8',
+    borderColor: colors.accent,
     borderWidth: 1,
   },
   guestRole: {
-    backgroundColor: '#e0ffe0',
-    color: '#15803d',
-    borderColor: '#22c55e',
+    backgroundColor: '#ede9fe',
+    color: '#06b6d4',
+    borderColor: colors.primary,
     borderWidth: 1,
-  },
-  inputContainer: {
-    width: '100%',
-    alignItems: 'center',
-    marginBottom: 18,
-  },
-  input: {
-    width: 300,
-    height: 48,
-    borderColor: '#d1d5db',
-    borderWidth: 1.3,
-    borderRadius: 10,
-    marginBottom: 14,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    backgroundColor: '#fff',
-    color: '#222',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 1,
-  },
-  button: {
-    backgroundColor: '#2563eb',
-    paddingVertical: 14,
-    paddingHorizontal: 80,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 8,
-    shadowColor: '#2563eb',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.13,
-    shadowRadius: 4,
-  },
-  buttonDisabled: {
-    backgroundColor: '#a5b4fc',
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
   },
   switchButton: {
     marginBottom: 8,
   },
   switchText: {
-    color: '#2563eb',
+    color: '#06b6d4',
     fontSize: 15,
     textDecorationLine: 'underline',
     fontWeight: '500',
   },
 });
+

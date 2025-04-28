@@ -22,9 +22,18 @@ export const fetchParkingSpaces = async () => {
   return spaces;
 };
 
-export const addParkingSpace = async (location: string) => {
+export const addParkingSpace = async (lotId: string, number: number) => {
   await addDoc(collection(db, 'parkingSpaces'), {
-    location: location,
+    lotId,
+    number,
+    isOccupied: false,
+  });
+};
+
+// (Legacy) If you want to add by location only
+export const addParkingSpaceByLocation = async (location: string) => {
+  await addDoc(collection(db, 'parkingSpaces'), {
+    location,
     isOccupied: false,
   });
 };
@@ -44,10 +53,16 @@ export const bookParkingSpace = async (spaceId: string) => {
 export const fetchParkingLots = async () => {
   const lotsCollection = collection(db, 'parkingLots');
   const snapshot = await getDocs(lotsCollection);
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+  return snapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      name: data.name ?? '',
+      location: data.location ?? '',
+      totalSpaces: data.totalSpaces ?? 0,
+      availableSpaces: data.availableSpaces ?? 0,
+    };
+  });
 };
 
 // Add a new parking lot
