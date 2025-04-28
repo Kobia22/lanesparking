@@ -1,21 +1,18 @@
+// Main App entry point - handles auth and navigation
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { onAuthStateChanged, getAuth, User } from 'firebase/auth';
-import LoginScreen from '@/src/screens/LoginScreen';
-import { useRouter, Slot } from 'expo-router';
 import { app } from '@/src/firebase/firebaseConfig';
+import LoginScreen from '@/app/screens/Auth/LoginScreen';
+import AppNavigator from '@/app/navigation/AppNavigator';
 
-export default function AppEntry() {
+export default function App() {
   const [user, setUser] = useState<User | null | undefined>(undefined);
-  const router = useRouter();
 
   useEffect(() => {
     const auth = getAuth(app);
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
-      if (firebaseUser) {
-        router.replace('/(tabs)/home');
-      }
     });
     return unsubscribe;
   }, []);
@@ -29,9 +26,8 @@ export default function AppEntry() {
   }
 
   if (!user) {
-    return <LoginScreen onLoginSuccess={() => router.replace('/(tabs)/home')} />;
+    return <LoginScreen onLoginSuccess={() => setUser(getAuth(app).currentUser)} />;
   }
 
-  return <Slot />;
+  return <AppNavigator />;
 }
-
