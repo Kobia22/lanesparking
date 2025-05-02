@@ -1,4 +1,4 @@
-// ParkingListScreen - Shows a list of parking spaces and navigates to detail/booking
+// ParkingListScreen - Shows a list of parking lots and their available spaces
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -9,7 +9,6 @@ import type { ParkingLot, ParkingSpace } from '@/src/firebase/types';
 
 export default function ParkingListScreen() {
   const [lots, setLots] = useState<ParkingLot[]>([]);
-  const [spacesByLot, setSpacesByLot] = useState<{ [lotId: string]: ParkingSpace[] }>({});
   const [loading, setLoading] = useState(true);
   const [bookingModalVisible, setBookingModalVisible] = useState(false);
   const [selectedLot, setSelectedLot] = useState<ParkingLot | null>(null);
@@ -20,56 +19,93 @@ export default function ParkingListScreen() {
   useEffect(() => {
     const loadLotsAndSpaces = async () => {
       setLoading(true);
-      const fetchedLots = await fetchParkingLots();
-      setLots(fetchedLots);
-      const allSpaces = await fetchParkingSpaces();
-      // Group spaces by lotId and only include available
-      const grouped: { [lotId: string]: ParkingSpace[] } = {};
-      fetchedLots.forEach(lot => {
-        grouped[lot.id] = allSpaces.filter(space => space.lotId === lot.id && !space.isOccupied);
-      });
-      setSpacesByLot(grouped);
-      setLoading(false);
+      try {
+        const fetchedLots = await fetchParkingLots();
+        setLots(fetchedLots);
+      } catch (error) {
+        console.error('Error fetching parking lots:', error);
+      } finally {
+        setLoading(false);
+      }
     };
     loadLotsAndSpaces();
   }, []);
+
+  const handleSpacePress = async (lot: ParkingLot, space: ParkingSpace) => {
+    setSelectedLot(lot);
+    setSelectedSpace(space);
+    setBookingModalVisible(true);
+  };
+
+  const handleBookingSuccess = async () => {
+    setBookingModalVisible(false);
+    setSelectedLot(null);
+    setSelectedSpace(null);
+    
+    try {
+      setLoading(true);
+      const fetchedLots = await fetchParkingLots();
+      setLots(fetchedLots);
+    } catch (error) {
+      console.error('Error refreshing parking lots:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return <View style={styles.center}><ActivityIndicator size="large" color="#2563eb" /></View>;
   }
 
   if (lots.length === 0) {
-    return <View style={styles.center}><Text style={styles.empty}>No parking lots found.</Text></View>;
+    return <View style={styles.center}><Text style={styles.noLotsText}>No parking lots found.</Text></View>;
   }
 
   return (
     <View style={{ flex: 1 }}>
       <ScrollView style={styles.container}>
-        <Text style={styles.header}>Available Parking Spaces</Text>
+        <Text style={styles.header}>Available Parking Lots</Text>
         {lots.map(lot => (
           <View key={lot.id} style={styles.lotSection}>
-            <Text style={styles.lotTitle}>{lot.name} <Text style={styles.lotLocation}>({lot.location})</Text></Text>
-            {spacesByLot[lot.id] && spacesByLot[lot.id].length > 0 ? (
-              spacesByLot[lot.id].map(space => (
+            <View style={styles.lotHeader}>
+              <Text style={styles.lotTitle}>{lot.name}</Text>
+              <Text style={styles.lotLocation}>{lot.location}</Text>
+              <View style={styles.spacesInfo}>
+                <Text style={styles.spacesText}>
+                  Total: {lot.totalSpaces}
+                </Text>
+                <Text style={[styles.spacesText, styles.available]}>
+                  Available: {lot.availableSpaces}
+                </Text>
+                <Text style={[styles.spacesText, styles.occupied]}>
+                  Occupied: {lot.occupiedSpaces}
+                </Text>
+                <Text style={[styles.spacesText, styles.booked]}>
+                  Booked: {lot.bookedSpaces}
+                </Text>
+              </View>
+            </View>
+            
+            <View style={styles.spacesList}>
+              {lot.availableSpaces > 0 ? (
                 <TouchableOpacity
-                  key={space.id}
-                  style={styles.card}
+                  style={styles.bookButton}
                   onPress={() => {
-                    const lotObj = lots.find(l => l.id === space.lotId);
-                    if (lotObj) {
-                      setSelectedLot(lotObj);
-                      setSelectedSpace(space);
-                      setBookingModalVisible(true);
-                    }
+                    // Get available spaces for this lot
+                    fetchParkingSpaces(lot.id).then(spaces => {
+                      const availableSpace = spaces.find(s => !s.isOccupied);
+                      if (availableSpace) {
+                        handleSpacePress(lot, availableSpace);
+                      }
+                    });
                   }}
                 >
-                  <Text style={styles.cardTitle}>{'Space #' + space.number}</Text>
-                  <Text style={styles.status}>Available</Text>
+                  <Text style={styles.bookButtonText}>Book a Space</Text>
                 </TouchableOpacity>
-              ))
-            ) : (
-              <Text style={styles.empty}>No available spaces in this lot.</Text>
-            )}
+              ) : (
+                <Text style={styles.noSpaces}>No available spaces</Text>
+              )}
+            </View>
           </View>
         ))}
       </ScrollView>
@@ -78,24 +114,7 @@ export default function ParkingListScreen() {
         lot={selectedLot as ParkingLot}
         space={selectedSpace as ParkingSpace}
         onClose={() => setBookingModalVisible(false)}
-        onBooked={() => {
-          setBookingModalVisible(false);
-          setSelectedLot(null);
-          setSelectedSpace(null);
-          // Reload data after booking
-          (async () => {
-            setLoading(true);
-            const fetchedLots = await fetchParkingLots();
-            setLots(fetchedLots);
-            const allSpaces = await fetchParkingSpaces();
-            const grouped: { [lotId: string]: ParkingSpace[] } = {};
-            fetchedLots.forEach(lot => {
-              grouped[lot.id] = allSpaces.filter(space => space.lotId === lot.id && !space.isOccupied);
-            });
-            setSpacesByLot(grouped);
-            setLoading(false);
-          })();
-        }}
+        onBooked={handleBookingSuccess}
       />
       {/* BookingTab displays active booking and booking history below */}
       {userIdOrPlate ? (
@@ -118,12 +137,19 @@ export default function ParkingListScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5faff', padding: 16 },
   header: { fontSize: 24, fontWeight: 'bold', marginBottom: 16, color: '#2563eb', alignSelf: 'center' },
-  lotSection: { marginBottom: 28 },
-  lotTitle: { fontSize: 20, fontWeight: 'bold', color: '#2563eb', marginBottom: 6 },
-  lotLocation: { fontSize: 15, color: '#888', fontWeight: 'normal' },
-  card: { backgroundColor: '#fff', padding: 18, borderRadius: 10, marginBottom: 10, elevation: 2 },
-  cardTitle: { fontSize: 18, fontWeight: 'bold', color: '#222' },
-  status: { fontSize: 16, color: '#22c55e', marginTop: 4 },
-  empty: { textAlign: 'center', color: '#aaa', marginBottom: 20, marginTop: 10 },
+  lotSection: { marginBottom: 28, backgroundColor: '#fff', borderRadius: 12, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
+  lotHeader: { marginBottom: 16 },
+  lotTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 4 },
+  lotLocation: { color: '#64748b', fontSize: 16, marginBottom: 12 },
+  spacesInfo: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
+  spacesText: { fontSize: 14 },
+  available: { color: '#10b981' },
+  occupied: { color: '#ef4444' },
+  booked: { color: '#f59e0b' },
+  spacesList: { },
+  bookButton: { backgroundColor: '#2563eb', padding: 12, borderRadius: 8, alignItems: 'center' },
+  bookButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  noSpaces: { color: '#64748b', textAlign: 'center', padding: 16 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  noLotsText: { fontSize: 16, color: '#64748b', textAlign: 'center' },
 });

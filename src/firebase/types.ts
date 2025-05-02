@@ -72,6 +72,10 @@ export type ParkingLot = {
   location: string;
   totalSpaces: number;
   availableSpaces: number;
+  occupiedSpaces: number;
+  bookedSpaces: number;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type ParkingSpace = {
@@ -80,5 +84,6 @@ export type ParkingSpace = {
   number: number;
   isOccupied: boolean;
   currentBookingId?: string | null;
-  location?: string; // backward compatibility for UI
-};
+  createdAt?: string;
+  updatedAt?: string;
+}; // backward compatibility for UI

@@ -1,56 +1,45 @@
-// Parking Lot Management Functions
-// Each parking lot can have fields: name, location, totalSpaces, availableSpaces, etc.
-// You can store up to 16 or more lots, scalable as needed.
-
 import { db } from './firebaseConfig';
-import { collection, getDocs, addDoc, updateDoc, doc, deleteDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { 
+  collection, 
+  getDocs, 
+  addDoc, 
+  updateDoc, 
+  doc, 
+  deleteDoc, 
+  getDoc, 
+  query, 
+  where, 
+  serverTimestamp 
+} from 'firebase/firestore';
 
-export const fetchParkingSpaces = async () => {
-  const parkingSpacesCollection = collection(db, 'parkingSpaces');
-  const snapshot = await getDocs(parkingSpacesCollection);
-  const spaces = snapshot.docs.map(doc => {
-    const data = doc.data();
-    return {
-      id: doc.id,
-      lotId: data.lotId ?? '',
-      number: data.number ?? 0,
-      isOccupied: data.isOccupied ?? false,
-      currentBookingId: data.currentBookingId ?? null,
-      location: data.location ?? 'Unknown Location', // keep for backward compatibility if needed
-    };
-  });
-  return spaces;
-};
+// Import types from types.ts instead of redefining them
+import { ParkingLot as ParkingLotType, ParkingSpace as ParkingSpaceType } from './types';
 
-export const addParkingSpace = async (lotId: string, number: number) => {
-  await addDoc(collection(db, 'parkingSpaces'), {
-    lotId,
-    number,
-    isOccupied: false,
-  });
-};
+// Internal types for database operations
+interface ParkingLotDB {
+  id: string;
+  name: string;
+  location: string;
+  totalSpaces: number;
+  availableSpaces: number;
+  occupiedSpaces: number;
+  bookedSpaces: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
-// (Legacy) If you want to add by location only
-export const addParkingSpaceByLocation = async (location: string) => {
-  await addDoc(collection(db, 'parkingSpaces'), {
-    location,
-    isOccupied: false,
-  });
-};
+interface ParkingSpaceDB {
+  id: string;
+  lotId: string;
+  number: number;
+  isOccupied: boolean;
+  currentBookingId?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
-export const bookParkingSpace = async (spaceId: string) => {
-  const updatedSpace = {
-    isOccupied: true,
-    bookedTime: new Date().getTime(),
-    expiryTime: new Date().getTime() + 300000, // 5 minutes in milliseconds
-  };
-  await updateDoc(doc(db, 'parkingSpaces', spaceId), updatedSpace);
-};
-
-// --- Parking Lot Functions ---
-
-// Fetch all parking lots
-export const fetchParkingLots = async () => {
+// Parking Lot Functions
+export const fetchParkingLots = async (): Promise<ParkingLotType[]> => {
   const lotsCollection = collection(db, 'parkingLots');
   const snapshot = await getDocs(lotsCollection);
   return snapshot.docs.map(doc => {
@@ -61,41 +50,111 @@ export const fetchParkingLots = async () => {
       location: data.location ?? '',
       totalSpaces: data.totalSpaces ?? 0,
       availableSpaces: data.availableSpaces ?? 0,
+      occupiedSpaces: data.occupiedSpaces ?? 0,
+      bookedSpaces: data.bookedSpaces ?? 0,
+      createdAt: data.createdAt ? data.createdAt.toDate().toISOString() : new Date().toISOString(),
+      updatedAt: data.updatedAt ? data.updatedAt.toDate().toISOString() : new Date().toISOString(),
     };
   });
 };
 
-// Add a new parking lot
-export const addParkingLot = async (lot: {
-  name: string;
-  location: string;
-  totalSpaces: number;
-  availableSpaces: number;
-}) => {
-  await addDoc(collection(db, 'parkingLots'), lot);
+export const addParkingLot = async (lot: Omit<ParkingLotType, 'id' | 'createdAt' | 'updatedAt'>): Promise<ParkingLotType> => {
+  const docRef = await addDoc(collection(db, 'parkingLots'), {
+    ...lot,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  
+  // Return the complete lot with ID for easier chaining
+  return {
+    ...lot,
+    id: docRef.id,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
 };
 
-// Update an existing parking lot
-export const updateParkingLot = async (lotId: string, updates: Partial<{
-  name: string;
-  location: string;
-  totalSpaces: number;
-  availableSpaces: number;
-}>) => {
-  await updateDoc(doc(db, 'parkingLots', lotId), updates);
+export const updateParkingLot = async (lotId: string, updates: Partial<ParkingLotType>): Promise<void> => {
+  await updateDoc(doc(db, 'parkingLots', lotId), {
+    ...updates,
+    updatedAt: serverTimestamp(),
+  });
 };
 
-// Delete a parking lot
-export const deleteParkingLot = async (lotId: string) => {
+export const deleteParkingLot = async (lotId: string): Promise<void> => {
   await deleteDoc(doc(db, 'parkingLots', lotId));
 };
 
-// Fetch a single parking lot by ID
-export const fetchParkingLotById = async (lotId: string) => {
+export const fetchParkingLotById = async (lotId: string): Promise<ParkingLotType | null> => {
   const lotDoc = await getDoc(doc(db, 'parkingLots', lotId));
   if (lotDoc.exists()) {
-    return { id: lotDoc.id, ...lotDoc.data() };
-  } else {
-    return null;
+    const data = lotDoc.data();
+    return {
+      id: lotDoc.id,
+      name: data.name ?? '',
+      location: data.location ?? '',
+      totalSpaces: data.totalSpaces ?? 0,
+      availableSpaces: data.availableSpaces ?? 0,
+      occupiedSpaces: data.occupiedSpaces ?? 0,
+      bookedSpaces: data.bookedSpaces ?? 0,
+      createdAt: data.createdAt ? data.createdAt.toDate().toISOString() : new Date().toISOString(),
+      updatedAt: data.updatedAt ? data.updatedAt.toDate().toISOString() : new Date().toISOString(),
+    };
   }
+  return null;
+};
+
+// Parking Space Functions
+export const fetchParkingSpaces = async (lotId: string): Promise<ParkingSpaceType[]> => {
+  const spacesCollection = collection(db, 'parkingSpaces');
+  const q = query(spacesCollection, where('lotId', '==', lotId));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      lotId: data.lotId,
+      number: data.number,
+      isOccupied: data.isOccupied || false,
+      currentBookingId: data.currentBookingId || null,
+      createdAt: data.createdAt ? data.createdAt.toDate().toISOString() : new Date().toISOString(),
+      updatedAt: data.updatedAt ? data.updatedAt.toDate().toISOString() : new Date().toISOString(),
+    };
+  });
+};
+
+export const addParkingSpace = async (space: Omit<ParkingSpaceType, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
+  const docRef = await addDoc(collection(db, 'parkingSpaces'), {
+    ...space,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  return docRef.id;
+};
+
+export const updateParkingSpace = async (spaceId: string, updates: Partial<ParkingSpaceType>): Promise<void> => {
+  await updateDoc(doc(db, 'parkingSpaces', spaceId), {
+    ...updates,
+    updatedAt: serverTimestamp(),
+  });
+};
+
+export const bookParkingSpace = async (spaceId: string, bookingId: string): Promise<void> => {
+  await updateDoc(doc(db, 'parkingSpaces', spaceId), {
+    isOccupied: true,
+    currentBookingId: bookingId,
+    updatedAt: serverTimestamp(),
+  });
+};
+
+export const releaseParkingSpace = async (spaceId: string): Promise<void> => {
+  await updateDoc(doc(db, 'parkingSpaces', spaceId), {
+    isOccupied: false,
+    currentBookingId: null,
+    updatedAt: serverTimestamp(),
+  });
+};
+
+export const deleteParkingSpace = async (spaceId: string): Promise<void> => {
+  await deleteDoc(doc(db, 'parkingSpaces', spaceId));
 };
