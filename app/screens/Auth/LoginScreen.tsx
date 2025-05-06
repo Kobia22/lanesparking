@@ -1,8 +1,7 @@
 // LoginScreen - Handles login/register for students and guests
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { app } from '@/src/firebase/firebaseConfig';
+import { auth } from '@/src/firebase/firebaseConfig'; // Use the React Native Firebase import
 import ThemedForm from '@/app/components/ThemedForm';
 import { colors } from '@/app/constants/theme';
 
@@ -22,7 +21,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
   const [isRegister, setIsRegister] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const auth = getAuth(app);
+  // No need to initialize auth here as we're importing it directly
 
   const handleAuth = async () => {
     setLoading(true);
@@ -34,11 +33,13 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
         return;
       }
       if (isRegister) {
-        await createUserWithEmailAndPassword(auth, email, password);
+        // React Native Firebase syntax
+        await auth.createUserWithEmailAndPassword(email, password);
         Alert.alert('Registration successful!');
         onLoginSuccess?.();
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
+        // React Native Firebase syntax
+        await auth.signInWithEmailAndPassword(email, password);
         Alert.alert('Login successful!');
         onLoginSuccess?.();
       }
@@ -127,4 +128,3 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
-

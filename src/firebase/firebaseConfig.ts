@@ -1,14 +1,9 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { getAnalytics, isSupported as analyticsIsSupported } from "firebase/analytics";
-import { getAuth } from 'firebase/auth';
+// Import from React Native Firebase packages
+import firebase from '@react-native-firebase/app';
+import '@react-native-firebase/auth';
+import '@react-native-firebase/firestore';
 
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// Configuration object - only needed if initializing manually
 const firebaseConfig = {
   apiKey: "AIzaSyAmNIOnMHl0zdF6VV1q8VUB1fjoqAI_S5I",
   authDomain: "lanesparking.firebaseapp.com",
@@ -19,15 +14,19 @@ const firebaseConfig = {
   measurementId: "G-BYNY9QHJNC"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+// Initialize Firebase if it's not already initialized
+// (usually unnecessary with RN Firebase as it auto-initializes)
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
 
-// Initialize Firebase Auth (default web persistence for Expo Go)
-const auth = getAuth(app);
+// Access services
+const firestore = firebase.firestore();
+const auth = firebase.auth();
 
 // Debug: Log auth state to verify persistence
-import { onAuthStateChanged } from 'firebase/auth';
-onAuthStateChanged(auth, user => {
+// Using the RN Firebase auth state listener
+auth.onAuthStateChanged(user => {
   if (user) {
     console.log('Firebase Auth: User is logged in:', user.uid);
   } else {
@@ -35,13 +34,17 @@ onAuthStateChanged(auth, user => {
   }
 });
 
-// Analytics: Only initialize if supported (web only, not in Expo Go or React Native)
-let analytics: ReturnType<typeof getAnalytics> | undefined;
-analyticsIsSupported().then((supported) => {
-  if (supported) {
-    analytics = getAnalytics(app);
-  }
-});
+// For React Native, we should use a different analytics approach
+// The Firebase/analytics import from web SDK won't work properly
+// React Native Firebase provides its own analytics module
+let analytics = null;
+try {
+  // Only import analytics if we need it (optional)
+  const analyticsModule = require('@react-native-firebase/analytics').default;
+  analytics = analyticsModule();
+} catch (e) {
+  console.log('Analytics not available or not set up');
+}
 
 // Export initialized Firebase instances
-export { app, analytics, auth, db};
+export { firebase, firestore, auth, analytics };

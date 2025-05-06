@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import { signInWithEmailAndPassword, getAuth } from 'firebase/auth';
-import { app } from '@/src/firebase/firebaseConfig';
+import { auth } from '@/src/firebase/firebaseConfig'; // Import from updated config
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const STAFF_REGEX = /^[A-Z]{3}\d{2}-\d{3}$/;
 
@@ -27,8 +27,8 @@ const AdminLoginScreen = ({ navigation }: any) => {
     try {
       // Construct admin email from username (e.g., ABC12-123@admin.lanesparking.com)
       const email = `${username}@admin.lanesparking.com`;
-      const auth = getAuth(app);
-      await signInWithEmailAndPassword(auth, email, password);
+      // Use React Native Firebase auth
+      await auth.signInWithEmailAndPassword(email, password);
       setLoading(false);
       navigation.replace('AdminDashboard');
     } catch (e: any) {

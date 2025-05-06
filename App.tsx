@@ -1,17 +1,18 @@
 // Main App entry point - handles auth and navigation
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
-import { onAuthStateChanged, getAuth, User } from 'firebase/auth';
-import { app } from '@/src/firebase/firebaseConfig';
+// Replace web SDK imports with React Native Firebase import
+import { auth } from '@/src/firebase/firebaseConfig';
 import LoginScreen from '@/app/screens/Auth/LoginScreen';
 import AppNavigator from '@/app/navigation/AppNavigator';
 
 export default function App() {
-  const [user, setUser] = useState<User | null | undefined>(undefined);
+  // Update type to match React Native Firebase user
+  const [user, setUser] = useState<any | null | undefined>(undefined);
 
   useEffect(() => {
-    const auth = getAuth(app);
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    // Use React Native Firebase auth listener
+    const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
       setUser(firebaseUser);
     });
     return unsubscribe;
@@ -26,7 +27,8 @@ export default function App() {
   }
 
   if (!user) {
-    return <LoginScreen onLoginSuccess={() => setUser(getAuth(app).currentUser)} />;
+    // Use React Native Firebase auth
+    return <LoginScreen onLoginSuccess={() => setUser(auth.currentUser)} />;
   }
 
   return <AppNavigator />;
